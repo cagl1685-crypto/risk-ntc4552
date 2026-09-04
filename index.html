@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RISK NTC 4552-2 | Evaluación de Riesgo por Rayos</title>
+<style>
+:root {
+    --bg: #f3f4f6; --surface: #ffffff; --border: #e5e7eb;
+    --text-primary: #111827; --text-secondary: #4b5563;
+    --accent: #1F4E78; --accent-hover: #2E75B6; --accent-light: #dbeafe;
+    --danger: #dc2626; --danger-bg: #fef2f2;
+    --positive: #16a34a; --positive-bg: #f0fdf4;
+    --warning: #d97706; --warning-bg: #fffbeb;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text-primary); padding: 20px; line-height: 1.5; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: var(--accent); }
+.subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid var(--border); flex-wrap: wrap; }
+.tab-btn { font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--accent-light); border-radius: var(--radius) var(--radius) 0 0; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+.card { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
+.card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+input, select { font-family: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; width: 100%; }
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(31,78,120,0.12); }
+.result-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+.result-table th { text-align: left; padding: 10px; background: var(--bg); border-bottom: 2px solid var(--border); color: var(--text-secondary); font-size: 12px; text-transform: uppercase; }
+.result-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+.badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.badge-ok { background: var(--positive-bg); color: var(--positive); }
+.badge-error { background: var(--danger-bg); color: var(--danger); }
+.alert { padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; display: none; }
+.alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+.alert-success { background: var(--positive-bg); color: var(--positive); border: 1px solid #bbf7d0; }
+</style>
+</head>
+<body>
+
+<h1>RISK NTC 4552-2 | Evaluación de Riesgo por Rayos</h1>
+<p class="subtitle">Versión Monolito Web v1.0 | Norma NTC 4552-2:2023 / IEC 62305-2:2010 | Ing. Carlos Andrés González L.</p>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-proyecto', this)">1. Proyecto</button>
+    <button class="tab-btn" onclick="switchTab('tab-edificio', this)">2. Edificio</button>
+    <button class="tab-btn" onclick="switchTab('tab-resultados', this)">3. Resultados</button>
+</div>
+
+<div id="alert-box" class="alert"></div>
+
+<div id="tab-proyecto" class="tab-panel active">
+    <div class="card">
+        <div class="card-title">Información General</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nombre del Proyecto</label>
+                <input type="text" id="proj-nombre" value="Proyecto Evaluación Riesgo">
+            </div>
+            <div class="form-group">
+                <label>Ciudad (Define Ng automático)</label>
+                <select id="proj-ciudad" onchange="actualizarNg()"></select>
+            </div>
+            <div class="form-group">
+                <label>Densidad de Rayos Ng (rayos/km²-año)</label>
+                <input type="number" id="proj-ng" step="0.1" value="5.0">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-edificio" class="tab-panel">
+    <div class="card">
+        <div class="card-title">Dimensiones y Ocupación</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Nombre Edificio</label><input type="text" id="ed-nombre" value="Bloque 1"></div>
+            <div class="form-group"><label>Largo L (m)</label><input type="number" id="ed-L" step="0.1" value="20.0"></div>
+            <div class="form-group"><label>Ancho W (m)</label><input type="number" id="ed-W" step="0.1" value="20.0"></div>
+            <div class="form-group"><label>Alto H (m)</label><input type="number" id="ed-H" step="0.1" value="10.0"></div>
+            <div class="form-group"><label>Protuberancia HP (m)</label><input type="number" id="ed-HP" step="0.1" value="0.0"></div>
+            <div class="form-group"><label>Personas Totales (nT)</label><input type="number" id="ed-nT" step="1" value="50"></div>
+            <div class="form-group"><label>Personas en Zona (nZ)</label><input type="number" id="ed-nZ" step="1" value="50"></div>
+            <div class="form-group"><label>Entorno (Cd)</label><select id="ed-Cd"></select></div>
+            <div class="form-group"><label>Riesgo Incendio (rf)</label><select id="ed-rf"></select></div>
+            <div class="form-group"><label>Nivel Pánico (hz)</label><select id="ed-hz"></select></div>
+            <div class="form-group"><label>Nota 1 (Riesgo Explosión/Salud)</label><select id="ed-nota1"><option value="false">No</option><option value="true">Sí</option></select></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Medidas de Protección (Mitigación)</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Pararrayos Externo (PB)</label><select id="ed-PB"></select></div>
+            <div class="form-group"><label>DPS Tableros (PSPD)</label><select id="ed-PSPD"></select></div>
+            <div class="form-group"><label>DPS Acometida (PEB)</label><select id="ed-PEB"></select></div>
+            <div class="form-group"><label>Medidas Contra Fuego (rp)</label><select id="ed-rp"></select></div>
+        </div>
+    </div>
+    <div class="toolbar">
+        <button class="btn-primary" onclick="calcularYMostrar()">Calcular Riesgo</button>
+        <button class="btn-secondary" onclick="limpiarFormulario()">Limpiar</button>
+    </div>
+</div>
+
+<div id="tab-resultados" class="tab-panel">
+    <div class="card">
+        <div class="card-title">Resultados de la Evaluación (R1 - R4)</div>
+        <table class="result-table">
+            <thead>
+                <tr>
+                    <th>Tipo de Riesgo</th>
+                    <th>Valor Calculado (Mitigado)</th>
+                    <th>Límite Tolerable (RT)</th>
+                    <th>Estado Normativo</th>
+                </tr>
+            </thead>
+            <tbody id="resultados-tbody">
+                <tr><td colspan="4" style="text-align:center; color: var(--text-secondary);">Presione "Calcular Riesgo" para ver los resultados.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const LIMITES_RT = [1e-5, 1e-3, 1e-4, 1e-3];
+
+const ciudades_colombia = {
+    "Bogota": 5.0, "Medellin": 8.0, "Cali": 6.0, "Barranquilla": 3.0,
+    "Bucaramanga": 7.0, "Cartagena": 4.0, "Cucuta": 6.5, "Pereira": 7.5,
+    "Santa Marta": 3.5, "Ibague": 6.0, "Pasto": 4.5, "Manizales": 7.0,
+    "Neiva": 5.5, "Villavicencio": 8.5, "Armenia": 7.2, "Popayan": 5.8,
+    "Sincelejo": 4.2, "Monteria": 4.8, "Valledupar": 5.2, "Tunja": 4.0,
+    "Manual": 0.0
+};
+
+const tabla_cd = {"Rodeada de objetos mas altos": 0.25, "Rodeada de objetos misma altura o inferior": 0.5, "Estructura aislada": 1.0, "Aislada en colina o monticulo": 2.0};
+const tabla_rf = {"Riesgo Nulo (rf = 0)": 0.0, "Bajo (Carga fuego < 400 MJ/m2)": 0.001, "Normal (Carga fuego 400-800 MJ/m2)": 0.01, "Alto (Carga fuego > 800 MJ/m2)": 0.1, "Explosion Zonas 0, 20 / Solidos": 1.0};
+const tabla_hz = {"Sin dano especial (hz = 1)": 1.0, "Panico Bajo (<100 pers, 2 pisos)": 2.0, "Panico Medio / Dificultad Evacuacion (Hospitales)": 5.0, "Panico Alto (>1000 pers)": 10.0};
+const factores_spcr = {"Ninguno": 1.0, "Nivel IV (PB = 0.2)": 0.2, "Nivel III (PB = 0.1)": 0.1, "Nivel II (PB = 0.05)": 0.05, "Nivel I (PB = 0.02)": 0.02, "Nivel I + Componentes Naturales (PB = 0.01)": 0.01, "Nivel I + Techo Metalico (PB = 0.001)": 0.001};
+const factores_dps = {"Sin DPS coordinado": 1.0, "DPS Nivel III-IV (P_DPS = 0.05)": 0.05, "DPS Nivel II (P_DPS = 0.02)": 0.02, "DPS Nivel I (P_DPS = 0.01)": 0.01, "DPS Alta Capacidad (P_DPS = 0.005)": 0.005};
+const factores_fuego = {"Sin medidas": 1.0, "Extintores / Instalaciones manuales / Rutas escape": 0.5, "Instalaciones fijas automaticas / Alarmas automaticas": 0.2};
+
+function llenarSelect(id, objeto) {
+    const select = document.getElementById(id);
+    select.innerHTML = "";
+    for (const [clave, valor] of Object.entries(objeto)) {
+        const option = document.createElement("option");
+        option.value = valor;
+        option.textContent = clave;
+        select.appendChild(option);
+    }
+}
+
+window.onload = function() {
+    llenarSelect("proj-ciudad", ciudades_colombia);
+    llenarSelect("ed-Cd", tabla_cd);
+    llenarSelect("ed-rf", tabla_rf);
+    llenarSelect("ed-hz", tabla_hz);
+    llenarSelect("ed-PB", factores_spcr);
+    llenarSelect("ed-PSPD", factores_dps);
+    llenarSelect("ed-PEB", factores_dps);
+    llenarSelect("ed-rp", factores_fuego);
+    actualizarNg();
+};
+
+function actualizarNg() {
+    const ciudad = document.getElementById("proj-ciudad").value;
+    document.getElementById("proj-ng").value = ciudades_colombia[ciudad];
+}
+
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+}
+
+function mostrarAlerta(mensaje, tipo) {
+    const alertBox = document.getElementById('alert-box');
+    alertBox.className = 'alert alert-' + tipo;
+    alertBox.textContent = mensaje;
+    alertBox.style.display = 'block';
+    setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
+}
+
+function validarEntrada(d) {
+    const errores = [];
+    if (d.L <= 0 || d.W <= 0 || d.H <= 0) errores.push("Las dimensiones (L, W, H) deben ser mayores a 0.");
+    if (d.nT <= 0) errores.push("El total de personas (nT) debe ser mayor a 0.");
+    if (d.nZ < 0) errores.push("Las personas en zona (nZ) no pueden ser negativas.");
+    if (d.nZ > d.nT) {
+        errores.push("Advertencia: nZ (" + d.nZ + ") es mayor que nT (" + d.nT + "). Se ajustara nZ al total.");
+        d.nZ = d.nT;
+    }
+    return errores;
+}
+
+class EvaluacionNTC4552_Full {
+    constructor(d, ng_global) {
+        this.d = d;
+        this.ng = ng_global;
+    }
+
+    calcular_riesgos() {
+        const d = this.d;
+        let Ad = (d.L * d.W) + 6 * d.H * (d.L + d.W) + Math.PI * (9 * Math.pow(d.H, 2));
+        if (d.HP > 0) Ad = Math.max(Ad, Math.PI * Math.pow(3 * d.HP, 2));
+        const Am = 2 * 500 * (d.L + d.W) + Math.PI * Math.pow(500, 2);
+        const Al = 40 * d.LL;
+        const Ai = 4000 * d.LL;
+        const Adj = (d.LJ * d.WJ) + 6 * d.HJ * (d.LJ + d.WJ) + Math.PI * (9 * Math.pow(d.HJ, 2));
+
+        const Nd = this.ng * (Ad / 1e6) * d.Cd;
+        const Nm = this.ng * (Am / 1e6);
+        const Nl = this.ng * (Al / 1e6) * d.CI * d.CE * d.CT;
+        const Nj = this.ng * (Adj / 1e6) * d.CDJ * d.CT;
+        const Ni = this.ng * (Ai / 1e6) * d.CI * d.CE * d.CT;
+
+        const Pa = 1.0, Pb = 1.0;
+        const Pc = Math.min(1.0, 1.0 * d.CLD);
+        const Pm = Math.min(1.0, 1.0 * Math.pow(d.KS1 * d.KS2 * d.KS3 * d.KS4, 2));
+        const Pu = Math.min(1.0, 1.0 * d.PLD * d.CLD);
+        const Pv = Math.min(1.0, 1.0 * d.PLD * d.CLD);
+        const Pw = Math.min(1.0, 1.0 * d.PLD * d.CLD);
+        const Pz = Math.min(1.0, 1.0 * d.PLI * d.CLI);
+
+        const Pa_m = Math.min(1.0, d.PTA * d.PB);
+        const Pb_m = Math.min(1.0, d.PB);
+        const Pc_m = Math.min(1.0, d.PSPD * d.CLD);
+        const Pm_m = Math.min(1.0, d.PSPD * Pm);
+        const Pu_m = Math.min(1.0, d.PTU * d.PEB * d.PLD * d.CLD);
+        const Pv_m = Math.min(1.0, d.PEB * d.PLD * d.CLD);
+        const Pw_m = Math.min(1.0, d.PSPD * d.PLD * d.CLD);
+        const Pz_m = Math.min(1.0, d.PSPD * d.PLI * d.CLI);
+
+        const c_Z_vidas = d.nZ / d.nT;
+        const c_Z_eco = d.cS_ct;
+        const factor_ocupacion = c_Z_vidas * (d.tZ / 8760);
+
+        const calc = (Pa_v, Pb_v, Pc_v, Pm_v, Pu_v, Pv_v, Pw_v, Pz_v, fb, fv) => {
+            const La1 = d.rt * d.LT * factor_ocupacion;
+            const Lb1 = fb * d.rf * d.hz * d.LT * factor_ocupacion;
+            const Lc1 = d.nota1 ? (d.LT * factor_ocupacion) : 0.0;
+            const Lm1 = Lc1;
+            const Lu1 = d.rt * d.LT * factor_ocupacion;
+            const Lv1 = fv * d.rf * d.hz * d.LT * factor_ocupacion;
+            const Lw1 = Lc1;
+            const Lz1 = Lc1;
+
+            const Ra1 = Nd * Pa_v * La1;
+            const Rb1 = Nd * Pb_v * Lb1;
+            const Rc1 = Nd * Pc_v * Lc1;
+            const Rm1 = Nm * Pm_v * Lm1;
+            const Ru1 = (Nl + Nj) * Pu_v * Lu1;
+            const Rv1 = (Nl + Nj) * Pv_v * Lv1;
+            const Rw1 = (Nl + Nj) * Pw_v * Lw1;
+            const Rz1 = Ni * Pz_v * Lz1;
+            const R1 = Ra1 + Rb1 + Rc1 + Rm1 + Ru1 + Rv1 + Rw1 + Rz1;
+
+            const Lb2 = fb * d.rf * d.LF * c_Z_vidas;
+            const Lc2 = d.LF * c_Z_vidas;
+            const Lm2 = Lc2;
+            const Lv2 = fv * d.rf * d.LF * c_Z_vidas;
+            const Lw2 = Lc2;
+            const Lz2 = Lc2;
+            const R2 = (Nd * Pb_v * Lb2) + (Nd * Pc_v * Lc2) + (Nm * Pm_v * Lm2) + ((Nl + Nj) * Pv_v * Lv2) + ((Nl + Nj) * Pw_v * Lw2) + (Ni * Pz_v * Lz2);
+
+            const Lb3 = fb * d.rf * d.LO * c_Z_eco;
+            const Lv3 = fv * d.rf * d.LO * c_Z_eco;
+            const R3 = (Nd * Pb_v * Lb3) + ((Nl + Nj) * Pv_v * Lv3);
+
+            const La4 = d.rt * c_Z_eco;
+            const Lb4 = fb * d.rf * c_Z_eco;
+            const Lc4 = 1.0 * c_Z_eco;
+            const Lm4 = 1.0 * c_Z_eco;
+            const Lu4 = d.rt * c_Z_eco;
+            const Lv4 = fv * d.rf * c_Z_eco;
+            const Lw4 = 1.0 * c_Z_eco;
+            const Lz4 = 1.0 * c_Z_eco;
+            const R4 = (Nd * Pa_v * La4) + (Nd * Pb_v * Lb4) + (Nd * Pc_v * Lc4) + (Nm * Pm_v * Lm4) + ((Nl + Nj) * Pu_v * Lu4) + ((Nl + Nj) * Pv_v * Lv4) + ((Nl + Nj) * Pw_v * Lw4) + (Ni * Pz_v * Lz4);
+
+            return [R1, R2, R3, R4];
+        };
+
+        const r_sin = calc(Pa, Pb, Pc, Pm, Pu, Pv, Pw, Pz, 1.0, 1.0);
+        const r_con = calc(Pa_m, Pb_m, Pc_m, Pm_m, Pu_m, Pv_m, Pw_m, Pz_m, d.rp, d.rp);
+
+        return { r_sin, r_con };
+    }
+}
+
+function calcularYMostrar() {
+    const d = {
+        nombre: document.getElementById("ed-nombre").value,
+        L: parseFloat(document.getElementById("ed-L").value) || 0,
+        W: parseFloat(document.getElementById("ed-W").value) || 0,
+        H: parseFloat(document.getElementById("ed-H").value) || 0,
+        HP: parseFloat(document.getElementById("ed-HP").value) || 0,
+        nT: parseFloat(document.getElementById("ed-nT").value) || 0,
+        nZ: parseFloat(document.getElementById("ed-nZ").value) || 0,
+        Cd: parseFloat(document.getElementById("ed-Cd").value),
+        rf: parseFloat(document.getElementById("ed-rf").value),
+        hz: parseFloat(document.getElementById("ed-hz").value),
+        nota1: document.getElementById("ed-nota1").value === "true",
+        PB: parseFloat(document.getElementById("ed-PB").value),
+        PSPD: parseFloat(document.getElementById("ed-PSPD").value),
+        PEB: parseFloat(document.getElementById("ed-PEB").value),
+        rp: parseFloat(document.getElementById("ed-rp").value),
+        rt: 0.001, LT: 0.01, tZ: 2000.0, cS_ct: 0.1,
+        LL: 50.0, CI: 1.0, CE: 0.1, CT: 1.0,
+        LJ: 1000.0, WJ: 20.0, HJ: 10.0, CDJ: 1.0,
+        LF: 0.01, LO: 0.0, KS1: 1.0, KS2: 1.0, KS3: 1.0, KS4: 0.40,
+        PTA: 1.0, PTU: 1.0, PLD: 1.0, PLI: 1.0, CLI: 1.0, CLD: 1.0
+    };
+
+    const ng = parseFloat(document.getElementById("proj-ng").value) || 5.0;
+
+    const errores = validarEntrada(d);
+    if (errores.length > 0) {
+        mostrarAlerta(errores.join(" | "), "error");
+        return;
+    }
+
+    try {
+        const motor = new EvaluacionNTC4552_Full(d, ng);
+        const { r_sin, r_con } = motor.calcular_riesgos();
+
+        const tbody = document.getElementById("resultados-tbody");
+        tbody.innerHTML = "";
+        
+        const tipos = ["R1 (Perdida de Vidas Humanas)", "R2 (Perdida de Servicio)", "R3 (Perdida de Patrimonio Cultural)", "R4 (Perdida Economica)"];
+        let todoCumple = true;
+
+        for (let i = 0; i < 4; i++) {
+            const cumple = r_con[i] <= LIMITES_RT[i];
+            if (!cumple) todoCumple = false;
+            
+            const tr = document.createElement("tr");
+            tr.innerHTML = '<td><strong>' + tipos[i] + '</strong></td><td>' + r_con[i].toExponential(4) + '</td><td>' + LIMITES_RT[i].toExponential(2) + '</td><td><span class="badge ' + (cumple ? 'badge-ok' : 'badge-error') + '">' + (cumple ? 'CUMPLE' : 'SUPERA LIMITE') + '</span></td>';
+            tbody.appendChild(tr);
+        }
+
+        if (todoCumple) {
+            mostrarAlerta("Evaluacion exitosa: Todos los riesgos estan por debajo de los limites tolerables de la NTC 4552-2.", "success");
+        } else {
+            mostrarAlerta("Atencion: Uno o mas riesgos superan los limites tolerables. Se requieren medidas de mitigacion adicionales.", "error");
+        }
+
+        switchTab('tab-resultados', document.querySelectorAll('.tab-btn')[2]);
+
+    } catch (error) {
+        mostrarAlerta("Error interno en el motor de calculo: " + error.message, "error");
+    }
+}
+
+function limpiarFormulario() {
+    document.getElementById("ed-L").value = 20.0;
+    document.getElementById("ed-W").value = 20.0;
+    document.getElementById("ed-H").value = 10.0;
+    document.getElementById("ed-HP").value = 0.0;
+    document.getElementById("ed-nT").value = 50;
+    document.getElementById("ed-nZ").value = 50;
+    document.getElementById("resultados-tbody").innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary);">Presione "Calcular Riesgo" para ver los resultados.</td></tr>';
+    mostrarAlerta("Formulario restablecido a valores de prueba.", "success");
+}
+</script>
+</body>
+</html>
