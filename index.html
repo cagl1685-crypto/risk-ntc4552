@@ -374,7 +374,7 @@ function limpiarFormulario() {
     document.getElementById("resultados-tbody").innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary);">Presione "Calcular Riesgo" para ver los resultados.</td></tr>';
     mostrarAlerta("Formulario restablecido a valores de prueba.", "success");
 }
-setTimeout(actualizarNg, 100);
+document.getElementById("proj-ng").value = "5.0";
 // Corrección Ng automático
 </script>
 </body>
