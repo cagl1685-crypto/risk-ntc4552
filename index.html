@@ -1,4 +1,4 @@
-html = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -195,11 +195,4 @@ document.getElementById("ed-nZ").value=50;
 mostrarAlerta("Formulario restablecido.","success")}
 </script>
 </body>
-</html>'''
-
-with open('index.html','w',encoding='utf-8') as f:
-    f.write(html)
-print("Archivo creado:",len(html),"caracteres")
-from google.colab import files
-files.download('index.html')
-print("Descargado. Ahora subalo a GitHub reemplazando el existente.")
+</html>
